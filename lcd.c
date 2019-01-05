@@ -111,7 +111,7 @@ void LCD_erase_screen(void){
 //draws a pixel on the screen at coordinates x,y with given color
 void LCD_draw_pixel(int16_t x, int16_t y, uint16_t color){
     //initialize the frame using given data
-    LCD_draw_frame(x,y,x,y);
+    LCD_draw_frame(x, y, x, y);
 
     /*write the pixel to the screen
       since color is 16 bits, send it with two iterations*/
@@ -144,7 +144,7 @@ void LCD_draw_rectangle(RECT rect){
     uint16_t color_val = rect.color;
 
     //draw the frame that represents the rectangle
-    LCD_draw_frame(x0,y0,x1,y1);
+    LCD_draw_frame(x0, y0, x1, y1);
 
     /*find the total number of pixels in the rectangle and fill them all
      * with the given color*/
@@ -165,7 +165,7 @@ void LCD_erase_rectangle(RECT rect){
     uint8_t y1 = rect.y + rect.height;
 
     //draw the frame that represents the rectangle
-    LCD_draw_frame(x0,y0,x1,y1);
+    LCD_draw_frame(x0, y0, x1, y1);
 
     /*find the total number of pixels in the rectangle and fill them all
      * with white*/
@@ -178,13 +178,49 @@ void LCD_erase_rectangle(RECT rect){
     }
 }
 
+//draws a cirlce with radius r centered at x_center and y_center
+//based on Bresenham's circle algorithm found here: https://www.geeksforgeeks.org/mid-point-circle-drawing-algorithm/
+void LCD_draw_circle(uint8_t x_center, uint8_t y_center, uint8_t r, uint16_t color){
+    uint8_t x = 0, y = r;
+    int8_t p = 3 - 2*r;
+
+    //draw initial points
+    LCD_draw_circle_octants(x_center, y_center, x, y, color);
+    //enter a loop to draw the rest of the points
+    while( y >= x){
+        x++;
+        //check for decision parameter(p) and update variables acoordingly
+        if(p > 0){
+            y--;
+            p = p + 4*(x - y) + 10;
+        }
+        else{
+            p = p + 4*x + 6;
+        }
+        LCD_draw_circle_octants(x_center, y_center, x, y, color);
+    }
+}
+
+//helper function that utilizes symmetry to draw a point in each octant of the circle
+void LCD_draw_circle_octants(uint8_t x_center, uint8_t y_center, uint8_t x, uint8_t y, uint16_t color){
+    LCD_draw_pixel(x_center + x, y_center + y, color);
+    LCD_draw_pixel(x_center - x, y_center + y, color);
+    LCD_draw_pixel(x_center + x, y_center - y, color);
+    LCD_draw_pixel(x_center - x, y_center - y, color);
+    LCD_draw_pixel(x_center + y, y_center + x, color);
+    LCD_draw_pixel(x_center - y, y_center + x, color);
+    LCD_draw_pixel(x_center + y, y_center - x, color);
+    LCD_draw_pixel(x_center - y, y_center - x, color);
+
+}
+
 //Takes a 70 entry array of ones and zeros and fills a corresponding 7x10 frame
 void LCD_write_character(const uint8_t * array, uint8_t x0, uint8_t y0, uint16_t color){
     uint8_t x1 = x0 + 6;
     uint8_t y1 = y0 + 9;
 
     //draw frame
-    LCD_draw_frame(x0,y0,x1,y1);
+    LCD_draw_frame(x0, y0, x1, y1);
 
     //fill representative array
     uint16_t i;
